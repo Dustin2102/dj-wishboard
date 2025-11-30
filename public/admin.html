@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>DJ Wishboard – Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --accent: #22c55e;
+      --accent-soft: #bbf7d0;
+      --accent-danger: #ef4444;
+      --accent-danger-soft: #fecaca;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --border-strong: #374151;
+      --radius-lg: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #020617, #020617 35%, #020617);
+      border-right: 1px solid var(--border-strong);
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+
+    .logo-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: radial-gradient(circle at top, #4ade80, #166534);
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin: 14px 2px 6px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, transform 0.05s;
+    }
+
+    .nav-btn span.label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--border-strong);
+    }
+
+    .nav-btn.active span.dot {
+      background: var(--accent);
+    }
+
+    .nav-btn:hover {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: rgba(34, 197, 94, 0.18);
+      color: #bbf7d0;
+    }
+
+    .nav-btn:active {
+      transform: scale(0.98);
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      color: var(--text-muted);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .sidebar-footer-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-ghost {
+      flex: 1;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #020617;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    /* MAIN CONTENT */
+    .content {
+      flex: 1;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 14px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at top left, #111827 0, #020617 45%);
+    }
+
+    .content-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .content-title {
+      font-size: 17px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .content-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .content-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: #020617;
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #22c55e, #16a34a);
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover { filter: brightness(1.05); }
+
+    .btn-outline { background: transparent; }
+
+    .btn-outline:hover {
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .views {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .view {
+      display: none;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.95);
+      padding: 14px 16px 18px;
+    }
+
+    .view.active { display: block; }
+
+    .view-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .view-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .view-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .view-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .view-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .stat-card {
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .stat-extra {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    input, button, textarea {
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #020617;
+      color: #f5f5f5;
+    }
+
+    .btn-primary-sm {
+      background: #22c55e;
+      color: #022c22;
+      font-weight: 600;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-primary-sm:hover { filter: brightness(1.05); }
+
+    .btn-sm {
+      border-radius: 999px;
+      border: none;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn-link {
+      background: #333366;
+      color: #e0e0ff;
+    }
+
+    .btn-link:hover { background: #444488; }
+
+    .btn-status-done {
+      background: #18643a;
+      color: #e0ffe8;
+    }
+
+    .btn-status-done:hover { background: #1f7f4a; }
+
+    .btn-status-reject {
+      background: #7a1f1f;
+      color: #ffe0e0;
+    }
+
+    .btn-status-reject:hover { background: #a42828; }
+
+    .btn-status-archive {
+      background: #78350f;
+      color: #ffedd5;
+    }
+
+    .btn-status-archive:hover {
+      background: #92400e;
+    }
+
+    .btn-status-reactivate {
+      background: #0369a1;
+      color: #e0f2fe;
+    }
+
+    .btn-status-reactivate:hover {
+      background: #0284c7;
+    }
+
+    .btn-status-delete {
+      background: #7f1d1d;
+      color: #fee2e2;
+    }
+
+    .btn-status-delete:hover {
+      background: #b91c1c;
+    }
+
+    .message {
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    .message.error { color: #ffb8b8; }
+    .message.success { color: #b5ffd7; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #111827;
+      padding: 7px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      font-size: 12px;
+    }
+
+    tr:nth-child(even) td,
+    tr:nth-child(odd) td {
+      background: #020617;
+    }
+
+    .nowrap { white-space: nowrap; }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+    }
+
+    .status-open {
+      background: #113322;
+      color: #a8ffce;
+    }
+
+    .status-done {
+      background: #113355;
+      color: #c0daff;
+    }
+
+    .status-rejected {
+      background: #551111;
+      color: #ffc0c0;
+    }
+
+    tr.open td { opacity: 1; }
+    tr.done td { opacity: 0.5; }
+    tr.rejected td {
+      opacity: 0.6;
+      color: #ffb8b8;
+    }
+
+    .url {
+      font-size: 11px;
+      color: #c7d2fe;
+      word-break: break-all;
+      margin: 2px 0;
+    }
+
+    .comment-btn {
+      background: #333366;
+      color: #e0e0ff;
+    }
+    .comment-btn:hover { background: #444488; }
+
+    .helper-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .layout { flex-direction: column; }
+      .content { padding: 14px 14px 18px; }
+      th:nth-child(5), td:nth-child(5) { display: none; } /* Kommentar */
+      th:nth-child(6), td:nth-child(6) { display: none; } /* Zeit */
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <div class="logo-badge">DJ</div>
+        <span>Wishboard</span>
+      </div>
+      <div class="sidebar-subtitle">
+        Admin-Dashboard für deine Musikwünsche.
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Bereiche</div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="dashboard">
+        <span class="label">
+          <span class="dot"></span>
+          Übersicht
+        </span>
+        <span class="badge">Live</span>
+      </button>
+      <button class="nav-btn" data-view="sessions">
+        <span class="label">
+          <span class="dot"></span>
+          Sessions & Links
+        </span>
+      </button>
+      <button class="nav-btn" data-view="wishes">
+        <span class="label">
+          <span class="dot"></span>
+          Wunschliste
+        </span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div>Aktive Session:</div>
+      <div id="sidebarActiveSession" class="helper-text">Noch keine ausgewählt.</div>
+      <div class="sidebar-footer-buttons">
+        <button type="button" class="btn-ghost" id="btnScrollToSessions">Sessions</button>
+        <button type="button" class="btn-ghost" id="btnScrollToWishes">Wünsche</button>
+      </div>
+      <div class="helper-text">
+        Tipp: Aktive Sessions oben, erledigte landen automatisch im Archiv unten.
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+    <div class="content-header">
+      <div class="content-header-left">
+        <div class="content-title">
+          DJ Wishboard – Admin
+          <span class="pill">
+            <span class="pill-dot"></span>
+            Live auf <span id="envHost">–</span>
+          </span>
+        </div>
+        <div class="content-subtitle">
+          Steuere Sessions, Links &amp; Wunschliste – ohne Tab-Chaos.
+        </div>
+      </div>
+      <div class="content-header-right">
+        <span class="tag">Aktive Session: <span id="headerActiveSession">keine</span></span>
+        <button id="btnReloadAll" class="btn btn-outline">Alles neu laden</button>
+        <button id="btnToggleAuto" class="btn btn-primary">Auto-Refresh: an</button>
+      </div>
+    </div>
+
+    <section class="views">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view active">
+        <div class="view-header">
+          <div>
+            <div class="view-title">Schnellübersicht</div>
+            <div class="view-subtitle">Aktive/erledigte Sessions &amp; Wünsche auf einen Blick.</div>
+          </div>
+        </div>
+
+        <div class="view-grid">
+          <div class="stat-card">
+            <div class="stat-label">Anzahl Sessions</div>
+            <div class="stat-value" id="statSessions">–</div>
+            <div class="stat-extra" id="statSessionsExtra">Noch keine Daten.</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Anzahl Wünsche (Filter)</div>
+            <div class="stat-value" id="statWishes">–</div>
+            <div class="stat-extra" id="statWishesExtra">Noch keine Daten.</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Aktive Session</div>
+            <div class="stat-value" id="statActiveSession">keine</div>
+            <div class="stat-extra">Wähle in „Sessions &amp; Links“ eine aktuelle Session aus.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SESSIONS -->
+      <section id="view-sessions" class="view">
+        <div class="view-header">
+          <div>
+            <div class="view-title">Sessions &amp; Links</div>
+            <div class="view-subtitle">
+              Neue Session anlegen, Regeln festlegen, aktive/erledigte Sessions verwalten.
+            </div>
+          </div>
+          <div class="view-header-right">
+            <span class="helper-text">
+              Basis-URL: <span id="baseUrlText"></span>
+            </span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns: minmax(0, 280px) minmax(0, 1fr);gap:14px;align-items:flex-start;flex-wrap:wrap;">
+          <div style="border-radius: 12px;border:1px solid var(--border-subtle);background:#020617;padding:10px 12px;">
+            <h3 style="margin:0 0 6px 0;font-size:14px;">Neue Session anlegen</h3>
+            <label for="sessionName">Session-Name</label>
+            <input type="text" id="sessionName" placeholder="z.B. FSV Weihnachtsfeier, Hochzeit Lisa &amp; Tom">
+
+            <label for="maxWishesPerGuest">Max. Wünsche pro Gast (0 = unbegrenzt)</label>
+            <input type="number" id="maxWishesPerGuest" placeholder="z.B. 3" min="0">
+
+            <label style="margin-top:10px;">
+              <input type="checkbox" id="requireName" checked>
+              Name ist Pflichtfeld
+            </label>
+            <label>
+              <input type="checkbox" id="allowComment" checked>
+              Kommentar-Feld anzeigen
+            </label>
+
+            <button class="btn-primary-sm" id="createSessionBtn">Session erstellen</button>
+            <div id="createMessage" class="message"></div>
+            <div class="helper-text">
+              Tipp: Für Parties oft gut: 2–3 Wünsche pro Gerät, Name Pflicht, Kommentar optional.
+            </div>
+          </div>
+
+          <div style="border-radius: 12px;border:1px solid var(--border-subtle);background:#020617;padding:10px 12px;">
+            <h3 style="margin:0 0 6px 0;font-size:14px;">Sessions verwalten</h3>
+            <div id="sessionsContainer" class="helper-text">Lade Sessions...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WISHES -->
+      <section id="view-wishes" class="view">
+        <div class="view-header">
+          <div>
+            <div class="view-title">Wunschliste</div>
+            <div class="view-subtitle" id="wishesSubtitle">
+              Offene Wünsche werden unten angezeigt. Session kann optional gefiltert werden.
+            </div>
+          </div>
+          <div class="view-header-right">
+            <span class="helper-text" id="wishesInfo">Grün = erledigt, Rot = abgelehnt.</span>
+            <button class="btn btn-outline" id="btnRefreshWishes">Wünsche neu laden</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:8px;font-size:11px;color:var(--text-muted);">
+          Tipp: Oben rechts stellst du Auto-Refresh für die Liste an/aus. Standard: alle 5 Sekunden.
+        </div>
+
+        <div style="max-height: 65vh; overflow: auto; border-radius: 10px; border:1px solid var(--border-subtle);">
+          <table>
+            <thead>
+            <tr>
+              <th>Gast</th>
+              <th>Song</th>
+              <th>Interpret</th>
+              <th>Status</th>
+              <th>Kommentar</th>
+              <th>Zeit</th>
+              <th>Aktionen</th>
+            </tr>
+            </thead>
+            <tbody id="wishesBody">
+            <!-- wird per JS befüllt -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script>
+  const baseUrl = window.location.origin;
+  document.getElementById('baseUrlText').textContent = baseUrl;
+  document.getElementById('envHost').textContent = window.location.host;
+
+  let currentSessionId = null;
+  let currentSessionName = null;
+  let autoRefresh = true;
+  let wishesInterval = null;
+
+  const wishesBody = document.getElementById('wishesBody');
+  const wishesSubtitle = document.getElementById('wishesSubtitle');
+  const wishesInfo = document.getElementById('wishesInfo');
+  const headerActiveSession = document.getElementById('headerActiveSession');
+  const sidebarActiveSession = document.getElementById('sidebarActiveSession');
+  const statActiveSession = document.getElementById('statActiveSession');
+
+  const statSessions = document.getElementById('statSessions');
+  const statSessionsExtra = document.getElementById('statSessionsExtra');
+  const statWishes = document.getElementById('statWishes');
+  const statWishesExtra = document.getElementById('statWishesExtra');
+
+  const btnReloadAll = document.getElementById('btnReloadAll');
+  const btnToggleAuto = document.getElementById('btnToggleAuto');
+  const btnRefreshWishes = document.getElementById('btnRefreshWishes');
+  const btnScrollToSessions = document.getElementById('btnScrollToSessions');
+  const btnScrollToWishes = document.getElementById('btnScrollToWishes');
+
+  const sessionsContainer = document.getElementById('sessionsContainer');
+  const createBtn = document.getElementById('createSessionBtn');
+  const sessionNameInput = document.getElementById('sessionName');
+  const maxWishesInput = document.getElementById('maxWishesPerGuest');
+  const requireNameInput = document.getElementById('requireName');
+  const allowCommentInput = document.getElementById('allowComment');
+  const createMessage = document.getElementById('createMessage');
+
+  const navButtons = document.querySelectorAll('.nav-btn');
+  const views = document.querySelectorAll('.view');
+
+  function switchView(id) {
+    views.forEach(v => v.classList.toggle('active', v.id === 'view-' + id));
+    navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === id));
+  }
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  btnScrollToSessions.addEventListener('click', () => switchView('sessions'));
+  btnScrollToWishes.addEventListener('click', () => switchView('wishes'));
+
+  function setActiveSession(id, name) {
+    currentSessionId = id;
+    currentSessionName = name || null;
+
+    const label = id ? `${name || id} (${id})` : 'keine';
+    headerActiveSession.textContent = label;
+    sidebarActiveSession.textContent = id ? label : 'Noch keine ausgewählt.';
+    statActiveSession.textContent = id ? name || id : 'keine';
+
+    if (id) {
+      wishesSubtitle.textContent = `Wunschliste für Session ${name || id}`;
+      wishesInfo.textContent = 'Grün = erledigt, Rot = abgelehnt. Filter: aktive Session.';
+    } else {
+      wishesSubtitle.textContent = 'Wunschliste ohne Session-Filter (alle Wünsche).';
+      wishesInfo.textContent = 'Tipp: Wähle links eine Session, um gezielt zu filtern.';
+    }
+
+    loadWishes();
+  }
+
+  async function loadSessions() {
+    sessionsContainer.textContent = 'Lade Sessions...';
+
+    try {
+      const res = await fetch('/api/sessions');
+      const sessions = await res.json();
+
+      statSessions.textContent = Array.isArray(sessions) ? sessions.length : '–';
+
+      if (!Array.isArray(sessions) || sessions.length === 0) {
+        sessionsContainer.innerHTML = '<p class="helper-text">Noch keine Sessions angelegt.</p>';
+        statSessionsExtra.textContent = 'Lege deine erste Session an, um QR-Codes zu erstellen.';
+        return;
+      }
+
+      const activeSessions = sessions.filter(s => s.active !== false);
+      const archivedSessions = sessions.filter(s => s.active === false);
+
+      const last = sessions[sessions.length - 1];
+      statSessionsExtra.textContent =
+        'Zuletzt erstellt: ' + (last.name || last.id);
+
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.gap = '12px';
+
+      // Aktive Sessions
+      const activeBlock = document.createElement('div');
+      const activeTitle = document.createElement('h4');
+      activeTitle.textContent = 'Aktive Sessions';
+      activeTitle.style.margin = '0 0 4px 0';
+      activeTitle.style.fontSize = '13px';
+      activeBlock.appendChild(activeTitle);
+
+      if (activeSessions.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'helper-text';
+        p.textContent = 'Aktuell keine aktiven Sessions. Lege eine neue an oder reaktiviere eine archivierte.';
+        activeBlock.appendChild(p);
+      } else {
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Erstellt</th>
+            <th>Links &amp; Aktionen</th>
+          </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        for (const s of activeSessions) {
+          const tr = document.createElement('tr');
+
+          const tdName = document.createElement('td');
+          tdName.textContent = s.name;
+          tr.appendChild(tdName);
+
+          const tdCode = document.createElement('td');
+          tdCode.innerHTML = `<span class="badge badge-status status-open">${s.id}</span>`;
+          tr.appendChild(tdCode);
+
+          const tdCreated = document.createElement('td');
+          tdCreated.className = 'nowrap';
+          if (s.createdAt) {
+            const d = new Date(s.createdAt);
+            tdCreated.textContent = d.toLocaleString();
+          } else {
+            tdCreated.textContent = '-';
+          }
+          tr.appendChild(tdCreated);
+
+          const tdLinks = document.createElement('td');
+
+          const guestUrl = `${baseUrl}/guest.html?session=${encodeURIComponent(s.id)}`;
+          const adminUrl = `${baseUrl}/admin.html?session=${encodeURIComponent(s.id)}`;
+
+          const setActiveBtn = document.createElement('button');
+          setActiveBtn.textContent = 'Als aktive Session';
+          setActiveBtn.className = 'btn-sm btn-status-done';
+          setActiveBtn.addEventListener('click', () => {
+            setActiveSession(s.id, s.name);
+            switchView('wishes');
+          });
+
+          const archiveBtn = document.createElement('button');
+          archiveBtn.textContent = 'Session beenden';
+          archiveBtn.className = 'btn-sm btn-status-archive';
+          archiveBtn.style.marginLeft = '4px';
+          archiveBtn.addEventListener('click', () => archiveSession(s));
+
+          const copyGuestBtn = document.createElement('button');
+          copyGuestBtn.textContent = 'Gast-Link kopieren';
+          copyGuestBtn.className = 'btn-sm btn-link';
+          copyGuestBtn.style.marginLeft = '4px';
+          copyGuestBtn.addEventListener('click', () => copyToClipboard(guestUrl));
+
+          const copyAdminBtn = document.createElement('button');
+          copyAdminBtn.textContent = 'DJ-Link kopieren';
+          copyAdminBtn.className = 'btn-sm btn-link';
+          copyAdminBtn.style.marginLeft = '4px';
+          copyAdminBtn.addEventListener('click', () => copyToClipboard(adminUrl));
+
+          const guestP = document.createElement('p');
+          guestP.className = 'url';
+          guestP.textContent = `Gast: ${guestUrl}`;
+
+          const adminP = document.createElement('p');
+          adminP.className = 'url';
+          adminP.textContent = `DJ: ${adminUrl}`;
+
+          const settingsInfo = document.createElement('p');
+          settingsInfo.className = 'helper-text';
+          const settings = s.settings || {};
+          const max = settings.maxWishesPerGuest || 0;
+          const requireName = settings.requireName === false ? 'Name optional' : 'Name Pflicht';
+          const comment = settings.allowComment === false ? 'Kommentar ausgeblendet' : 'Kommentar erlaubt';
+          settingsInfo.textContent =
+            `Status: aktiv · Regeln: ${max > 0 ? max + ' Wünsche/Gerät' : 'unbegrenzte Wünsche/Gerät'}, ${requireName}, ${comment}.`;
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Regeln bearbeiten';
+          editBtn.className = 'btn-sm';
+          editBtn.style.marginTop = '4px';
+          editBtn.addEventListener('click', () => editSessionSettings(s));
+
+          tdLinks.appendChild(setActiveBtn);
+          tdLinks.appendChild(archiveBtn);
+          tdLinks.appendChild(copyGuestBtn);
+          tdLinks.appendChild(copyAdminBtn);
+          tdLinks.appendChild(guestP);
+          tdLinks.appendChild(adminP);
+          tdLinks.appendChild(settingsInfo);
+          tdLinks.appendChild(editBtn);
+
+          tr.appendChild(tdLinks);
+          tbody.appendChild(tr);
+        }
+
+        table.appendChild(tbody);
+        activeBlock.appendChild(table);
+      }
+
+      wrapper.appendChild(activeBlock);
+
+      // Archivierte Sessions
+      const archivedBlock = document.createElement('div');
+      const archivedTitle = document.createElement('h4');
+      archivedTitle.textContent = 'Archivierte Sessions';
+      archivedTitle.style.margin = '8px 0 4px 0';
+      archivedTitle.style.fontSize = '13px';
+      archivedBlock.appendChild(archivedTitle);
+
+      if (archivedSessions.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'helper-text';
+        p.textContent = 'Noch keine archivierten Sessions. Beende eine Session, um sie hierhin zu verschieben.';
+        archivedBlock.appendChild(p);
+      } else {
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Erstellt</th>
+            <th>Archiv &amp; Aktionen</th>
+          </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        for (const s of archivedSessions) {
+          const tr = document.createElement('tr');
+
+          const tdName = document.createElement('td');
+          tdName.textContent = s.name;
+          tr.appendChild(tdName);
+
+          const tdCode = document.createElement('td');
+          tdCode.innerHTML = `<span class="badge badge-status status-done">${s.id}</span>`;
+          tr.appendChild(tdCode);
+
+          const tdCreated = document.createElement('td');
+          tdCreated.className = 'nowrap';
+          if (s.createdAt) {
+            const d = new Date(s.createdAt);
+            tdCreated.textContent = d.toLocaleString();
+          } else {
+            tdCreated.textContent = '-';
+          }
+          tr.appendChild(tdCreated);
+
+          const tdLinks = document.createElement('td');
+
+          const guestUrl = `${baseUrl}/guest.html?session=${encodeURIComponent(s.id)}`;
+          const adminUrl = `${baseUrl}/admin.html?session=${encodeURIComponent(s.id)}`;
+
+          const reactivateBtn = document.createElement('button');
+          reactivateBtn.textContent = 'Reaktivieren';
+          reactivateBtn.className = 'btn-sm btn-status-reactivate';
+          reactivateBtn.addEventListener('click', () => reactivateSession(s));
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Löschen';
+          deleteBtn.className = 'btn-sm btn-status-delete';
+          deleteBtn.style.marginLeft = '4px';
+          deleteBtn.addEventListener('click', () => deleteSession(s));
+
+          const guestP = document.createElement('p');
+          guestP.className = 'url';
+          guestP.textContent = `Gast: ${guestUrl}`;
+
+          const adminP = document.createElement('p');
+          adminP.className = 'url';
+          adminP.textContent = `DJ: ${adminUrl}`;
+
+          const settingsInfo = document.createElement('p');
+          settingsInfo.className = 'helper-text';
+          const settings = s.settings || {};
+          const max = settings.maxWishesPerGuest || 0;
+          const requireName = settings.requireName === false ? 'Name optional' : 'Name Pflicht';
+          const comment = settings.allowComment === false ? 'Kommentar ausgeblendet' : 'Kommentar erlaubt';
+          settingsInfo.textContent =
+            `Status: beendet · Regeln: ${max > 0 ? max + ' Wünsche/Gerät' : 'unbegrenzte Wünsche/Gerät'}, ${requireName}, ${comment}.`;
+
+          tdLinks.appendChild(reactivateBtn);
+          tdLinks.appendChild(deleteBtn);
+          tdLinks.appendChild(guestP);
+          tdLinks.appendChild(adminP);
+          tdLinks.appendChild(settingsInfo);
+
+          tr.appendChild(tdLinks);
+          tbody.appendChild(tr);
+        }
+
+        table.appendChild(tbody);
+        archivedBlock.appendChild(table);
+      }
+
+      wrapper.appendChild(archivedBlock);
+
+      sessionsContainer.innerHTML = '';
+      sessionsContainer.appendChild(wrapper);
+
+    } catch (err) {
+      console.error(err);
+      sessionsContainer.innerHTML = '<p class="message error">Fehler beim Laden der Sessions.</p>';
+      statSessions.textContent = '–';
+      statSessionsExtra.textContent = 'Fehler beim Abrufen der Daten.';
+    }
+  }
+
+  async function archiveSession(session) {
+    if (!confirm(`Session „${session.name}“ beenden? Neue Wünsche sind dann nicht mehr möglich.`)) return;
+
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/active`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: false })
+      });
+      const result = await res.json();
+      if (!result.success) {
+        alert(result.message || 'Fehler beim Beenden der Session.');
+        return;
+      }
+
+      if (currentSessionId === session.id) {
+        setActiveSession(null, null);
+      }
+
+      await loadSessions();
+      await loadWishes();
+
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Beenden der Session.');
+    }
+  }
+
+  async function reactivateSession(session) {
+    try {
+      const res = await fetch(`/api/sessions/${session.id}/active`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: true })
+      });
+      const result = await res.json();
+      if (!result.success) {
+        alert(result.message || 'Fehler beim Reaktivieren der Session.');
+        return;
+      }
+
+      setActiveSession(session.id, session.name);
+      await loadSessions();
+      await loadWishes();
+      switchView('wishes');
+
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Reaktivieren der Session.');
+    }
+  }
+
+  async function deleteSession(session) {
+    if (!confirm(
+      `Session „${session.name}“ wirklich löschen?\n\nAlle zugehörigen Wünsche werden dauerhaft entfernt.`
+    )) return;
+
+    try {
+      const res = await fetch(`/api/sessions/${session.id}`, {
+        method: 'DELETE'
+      });
+      const result = await res.json();
+      if (!result.success) {
+        alert(result.message || 'Fehler beim Löschen der Session.');
+        return;
+      }
+
+      if (currentSessionId === session.id) {
+        setActiveSession(null, null);
+      }
+
+      await loadSessions();
+      await loadWishes();
+
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Löschen der Session.');
+    }
+  }
+
+  async function editSessionSettings(session) {
+    try {
+      const current = session.settings || {};
+      const maxCurrent = current.maxWishesPerGuest || 0;
+
+      const maxInput = prompt(
+        'Max. Wünsche pro Gast (0 = unbegrenzt):',
+        String(maxCurrent)
+      );
+      if (maxInput === null) return;
+
+      const requireNameConfirm = confirm(
+        'Soll der Name Pflicht sein? (OK = ja, Abbrechen = nein)'
+      );
+      const allowCommentConfirm = confirm(
+        'Kommentar-Feld anzeigen? (OK = ja, Abbrechen = nein)'
+      );
+
+      const payload = {
+        maxWishesPerGuest: Number(maxInput) || 0,
+        requireName: requireNameConfirm,
+        allowComment: allowCommentConfirm
+      };
+
+      const res = await fetch(`/api/sessions/${session.id}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (!result.success) {
+        alert(result.message || 'Fehler beim Speichern der Einstellungen.');
+        return;
+      }
+
+      await loadSessions();
+
+      if (currentSessionId === session.id) {
+        setActiveSession(session.id, session.name);
+      }
+
+      alert('Einstellungen gespeichert.');
+
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Speichern der Einstellungen.');
+    }
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Link in Zwischenablage kopiert.\n\n' + text);
+      }).catch(() => {
+        alert('Konnte nicht automatisch kopieren. Bitte manuell markieren.');
+      });
+    } else {
+      alert('Dein Browser unterstützt automatisches Kopieren hier nicht. Bitte Link manuell markieren.');
+    }
+  }
+
+  createBtn.addEventListener('click', async () => {
+    createMessage.textContent = '';
+    createMessage.className = 'message';
+
+    const name = sessionNameInput.value.trim();
+    const max = parseInt(maxWishesInput.value, 10) || 0;
+    const requireName = !!requireNameInput.checked;
+    const allowComment = !!allowCommentInput.checked;
+
+    if (!name) {
+      createMessage.textContent = 'Bitte einen Session-Namen eingeben.';
+      createMessage.classList.add('error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          maxWishesPerGuest: max,
+          requireName,
+          allowComment
+        })
+      });
+
+      const result = await res.json();
+
+      if (!result.success) {
+        createMessage.textContent = result.message || 'Fehler beim Erstellen.';
+        createMessage.classList.add('error');
+        return;
+      }
+
+      createMessage.textContent = 'Session erstellt ✅';
+      createMessage.classList.add('success');
+
+      sessionNameInput.value = '';
+      maxWishesInput.value = '';
+      requireNameInput.checked = true;
+      allowCommentInput.checked = true;
+
+      await loadSessions();
+
+      if (result.session && result.session.id) {
+        setActiveSession(result.session.id, result.session.name);
+      }
+
+    } catch (err) {
+      console.error(err);
+      createMessage.textContent = 'Netzwerkfehler beim Erstellen.';
+      createMessage.classList.add('error');
+    }
+  });
+
+  async function loadWishes() {
+    try {
+      let url = '/api/wishes';
+      if (currentSessionId) {
+        url += '?sessionId=' + encodeURIComponent(currentSessionId);
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        statWishes.textContent = data.length;
+        statWishesExtra.textContent = currentSessionId
+          ? `Wünsche für aktive Session (${currentSessionId}).`
+          : 'Alle Wünsche (kein Session-Filter aktiv).';
+      } else {
+        statWishes.textContent = '–';
+        statWishesExtra.textContent = 'Keine Daten erhalten.';
+      }
+
+      wishesBody.innerHTML = '';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.textContent = currentSessionId
+          ? 'Für diese Session sind noch keine Wünsche eingegangen.'
+          : 'Noch keine Wünsche eingegangen.';
+        td.style.textAlign = 'center';
+        td.style.padding = '16px';
+        tr.appendChild(td);
+        wishesBody.appendChild(tr);
+        return;
+      }
+
+      const sorted = [...data].sort((a, b) => {
+        const order = { open: 0, done: 1, rejected: 2 };
+        if (order[a.status] !== order[b.status]) {
+          return order[a.status] - order[b.status];
+        }
+        return b.id - a.id;
+      });
+
+      for (const wish of sorted) {
+        const tr = document.createElement('tr');
+        tr.className = wish.status;
+
+        const tdName = document.createElement('td');
+        tdName.textContent = wish.name || 'Gast';
+        tr.appendChild(tdName);
+
+        const tdTitle = document.createElement('td');
+        tdTitle.textContent = wish.title;
+        tr.appendChild(tdTitle);
+
+        const tdArtist = document.createElement('td');
+        tdArtist.textContent = wish.artist;
+        tr.appendChild(tdArtist);
+
+        const tdStatus = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.classList.add('badge-status');
+        if (wish.status === 'open') {
+          badge.classList.add('status-open');
+          badge.textContent = 'Offen';
+        } else if (wish.status === 'done') {
+          badge.classList.add('status-done');
+          badge.textContent = 'Erledigt';
+        } else if (wish.status === 'rejected') {
+          badge.classList.add('status-rejected');
+          badge.textContent = 'Abgelehnt';
+        }
+        tdStatus.appendChild(badge);
+        tr.appendChild(tdStatus);
+
+        const tdComment = document.createElement('td');
+        if (wish.comment) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Anzeigen';
+          btn.className = 'btn-sm comment-btn';
+          btn.addEventListener('click', () => {
+            alert('Kommentar von ' + (wish.name || 'Gast') + ':\n\n' + wish.comment);
+          });
+          tdComment.appendChild(btn);
+        } else {
+          tdComment.textContent = '-';
+        }
+        tr.appendChild(tdComment);
+
+        const tdTime = document.createElement('td');
+        tdTime.className = 'nowrap';
+        if (wish.createdAt) {
+          const d = new Date(wish.createdAt);
+          tdTime.textContent = d.toLocaleString();
+        } else {
+          tdTime.textContent = '-';
+        }
+        tr.appendChild(tdTime);
+
+        const tdActions = document.createElement('td');
+        if (wish.status !== 'done') {
+          const doneBtn = document.createElement('button');
+          doneBtn.textContent = 'Erledigt';
+          doneBtn.className = 'btn-sm btn-status-done';
+          doneBtn.addEventListener('click', () => updateStatus(wish.id, 'done'));
+          tdActions.appendChild(doneBtn);
+        }
+
+        if (wish.status !== 'rejected') {
+          const rejectBtn = document.createElement('button');
+          rejectBtn.textContent = 'Ablehnen';
+          rejectBtn.className = 'btn-sm btn-status-reject';
+          rejectBtn.style.marginLeft = '4px';
+          rejectBtn.addEventListener('click', () => updateStatus(wish.id, 'rejected'));
+          tdActions.appendChild(rejectBtn);
+        }
+
+        tr.appendChild(tdActions);
+        wishesBody.appendChild(tr);
+      }
+
+    } catch (err) {
+      console.error(err);
+      wishesBody.innerHTML = '';
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 7;
+      td.textContent = 'Fehler beim Laden der Wünsche.';
+      td.style.textAlign = 'center';
+      td.style.padding = '16px';
+      tr.appendChild(td);
+      wishesBody.appendChild(tr);
+    }
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      await fetch(`/api/wishes/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      loadWishes();
+    } catch (err) {
+      console.error(err);
+      alert('Fehler beim Aktualisieren des Status.');
+    }
+  }
+
+  function startAutoRefresh() {
+    if (wishesInterval) clearInterval(wishesInterval);
+    wishesInterval = setInterval(() => {
+      if (autoRefresh) {
+        loadWishes();
+      }
+    }, 5000);
+  }
+
+  btnToggleAuto.addEventListener('click', () => {
+    autoRefresh = !autoRefresh;
+    btnToggleAuto.textContent = 'Auto-Refresh: ' + (autoRefresh ? 'an' : 'aus');
+  });
+
+  btnRefreshWishes.addEventListener('click', () => {
+    loadWishes();
+  });
+
+  btnReloadAll.addEventListener('click', () => {
+    loadSessions();
+    loadWishes();
+  });
+
+  (function initFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionFromUrl = urlParams.get('session');
+    if (sessionFromUrl) {
+      setActiveSession(sessionFromUrl, null);
+    } else {
+      setActiveSession(null, null);
+    }
+  })();
+
+  loadSessions();
+  loadWishes();
+  startAutoRefresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>DJ Wishboard – Musikwunsch</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0b0b15;
+      color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #cccccc;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    input, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #11111b;
+      color: #f5f5f5;
+      font-size: 0.95rem;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+    button {
+      margin-top: 16px;
+      background: #00c896;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00e2aa;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #b0b0b0;
+    }
+    .message {
+      margin-top: 16px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .message.success {
+      background: #053b24;
+      color: #b5ffd7;
+    }
+    .message.error {
+      background: #3b0505;
+      color: #ffd5d5;
+    }
+  </style>
+</head>
+<body>
+  <h1>DJ Wishboard</h1>
+  <p class="subtitle" id="subtitleText">Wünsch dir deinen Song für heute Abend 🎶</p>
+
+  <form id="wishForm">
+    <label for="name" id="nameLabel">Name:</label>
+    <input type="text" id="name" name="name" required placeholder="z.B. Lisa">
+
+    <label for="title">Songtitel *</label>
+    <input type="text" id="title" name="title" required placeholder="z.B. Angels">
+
+    <label for="artist">Interpret *</label>
+    <input type="text" id="artist" name="artist" required placeholder="z.B. Robbie Williams">
+
+    <label for="comment" id="commentLabel">Kommentar (optional)</label>
+    <textarea id="comment" name="comment" placeholder="z.B. für das Geburtstagskind"></textarea>
+
+    <button type="submit">Wunsch abschicken</button>
+    <p class="small" id="hintText">Mit * markierte Felder sind Pflicht.</p>
+  </form>
+
+  <div id="message" class="message"></div>
+
+<script>
+    const form = document.getElementById('wishForm');
+    const messageBox = document.getElementById('message');
+    const nameInput = document.getElementById('name');
+    const nameLabel = document.getElementById('nameLabel');
+    const commentLabel = document.getElementById('commentLabel');
+    const commentInput = document.getElementById('comment');
+    const subtitleText = document.getElementById('subtitleText');
+    const hintText = document.getElementById('hintText');
+
+    // Session-ID aus der URL lesen: ?session=ABC123
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+
+    let sessionSettings = null;
+    let deviceId = null;
+
+    // Eindeutige Geräte-ID erzeugen & im localStorage speichern
+    function ensureDeviceId() {
+      try {
+        const key = 'djWishboardDeviceId';
+        let id = localStorage.getItem(key);
+        if (!id) {
+          id = 'dev-' + Math.random().toString(36).substring(2) + '-' + Date.now().toString(36);
+          localStorage.setItem(key, id);
+        }
+        deviceId = id;
+      } catch (e) {
+        // Wenn localStorage nicht geht (sehr selten), lassen wir deviceId leer
+        deviceId = null;
+      }
+    }
+
+    async function init() {
+      ensureDeviceId();
+
+      if (!sessionId) {
+        form.style.display = 'none';
+        messageBox.textContent = 'Diese Wunschseite ist ungültig. Bitte scanne den richtigen QR-Code vom DJ.';
+        messageBox.className = 'message error';
+        messageBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/sessions/' + encodeURIComponent(sessionId));
+        if (!res.ok) {
+          throw new Error('Session nicht gefunden');
+        }
+        const session = await res.json();
+        sessionSettings = session.settings || {};
+
+        applySessionSettings(session);
+
+      } catch (err) {
+        console.error(err);
+        form.style.display = 'none';
+        messageBox.textContent = 'Diese Session ist ungültig oder nicht mehr aktiv. Bitte frag den DJ nach einem neuen Link.';
+        messageBox.className = 'message error';
+        messageBox.style.display = 'block';
+      }
+    }
+
+    function applySessionSettings(session) {
+      // Untertitel mit Session-Namen
+      if (session.name) {
+        subtitleText.textContent = `Wünsch dir deinen Song für „${session.name}“ 🎶`;
+      }
+
+      // Max. Wünsche pro Gerät Hinweis
+      if (sessionSettings.maxWishesPerGuest && sessionSettings.maxWishesPerGuest > 0) {
+        hintText.textContent =
+          `Mit * markierte Felder sind Pflicht. Hinweis: Maximal ${sessionSettings.maxWishesPerGuest} Wünsche von diesem Gerät.`;
+      } else {
+        hintText.textContent = 'Mit * markierte Felder sind Pflicht.';
+      }
+
+      // Name Pflicht / optional
+      if (sessionSettings.requireName === false) {
+        nameInput.required = false;
+        nameLabel.textContent = 'Name (optional):';
+      } else {
+        nameInput.required = true;
+        nameLabel.textContent = 'Name:';
+      }
+
+      // Kommentar-Feld ein-/ausblenden
+      if (sessionSettings.allowComment === false) {
+        if (commentLabel) commentLabel.style.display = 'none';
+        if (commentInput) {
+          commentInput.style.display = 'none';
+          commentInput.value = '';
+        }
+      } else {
+        if (commentLabel) commentLabel.style.display = 'block';
+        if (commentInput) commentInput.style.display = 'block';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      messageBox.style.display = 'none';
+
+      if (!sessionId) {
+        messageBox.textContent = 'Session ist ungültig.';
+        messageBox.className = 'message error';
+        messageBox.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData(form);
+      const data = {
+        name: formData.get('name'),
+        title: formData.get('title'),
+        artist: formData.get('artist'),
+        comment: formData.get('comment'),
+        sessionId: sessionId,
+        deviceId: deviceId
+      };
+
+      try {
+        const res = await fetch('/api/wishes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          messageBox.textContent = 'Danke! Dein Wunsch wurde an den DJ geschickt 🙌';
+          messageBox.className = 'message success';
+          messageBox.style.display = 'block';
+
+          // Nur Song & Kommentar leeren, Name behalten:
+          document.getElementById('title').value = '';
+          document.getElementById('artist').value = '';
+          document.getElementById('comment').value = '';
+        } else {
+          messageBox.textContent = result.message || 'Es ist ein Fehler aufgetreten.';
+          messageBox.className = 'message error';
+          messageBox.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        messageBox.textContent = 'Netzwerkfehler – versuch es gleich nochmal.';
+        messageBox.className = 'message error';
+        messageBox.style.display = 'block';
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

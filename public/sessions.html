@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>DJ Wishboard – Sessions</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #050510;
+      color: #f5f5f5;
+    }
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #222;
+      background: #08081a;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0 0 4px 0;
+      font-size: 1.4rem;
+    }
+    header p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #aaaaaa;
+    }
+    main {
+      padding: 16px 24px 32px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #080818;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #222;
+    }
+    .card h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.1rem;
+    }
+    label {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    input, button {
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #11111b;
+      color: #f5f5f5;
+    }
+    button {
+      border-radius: 6px;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button.primary {
+      background: #00c896;
+      color: #050510;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    button.primary:hover {
+      background: #00e2aa;
+    }
+    button.small {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+    button.link-btn {
+      background: #333366;
+      color: #e0e0ff;
+    }
+    button.link-btn:hover {
+      background: #444488;
+    }
+    .message {
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+    .message.error {
+      color: #ffb8b8;
+    }
+    .message.success {
+      color: #b5ffd7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    th, td {
+      border-bottom: 1px solid #222;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #0d0d20;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    tr:nth-child(even) td {
+      background: #090918;
+    }
+    tr:nth-child(odd) td {
+      background: #050511;
+    }
+    .nowrap {
+      white-space: nowrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+    }
+    .badge.active {
+      background: #113322;
+      color: #a8ffce;
+    }
+    .url {
+      font-size: 0.8rem;
+      color: #ccccff;
+      word-break: break-all;
+    }
+    @media (max-width: 768px) {
+      th:nth-child(3), td:nth-child(3) { display: none; } /* CreatedAt ausblenden */
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DJ Wishboard – Sessions</h1>
+    <p>Lege neue Sessions an und hol dir die Links für Gäste und DJ-Ansicht.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Neue Session anlegen</h2>
+      <label for="sessionName">Session-Name</label>
+      <input type="text" id="sessionName" placeholder="z.B. FSV Weihnachtsfeier, Hochzeit Lisa & Tom">
+      <button class="primary" id="createSessionBtn">Session erstellen</button>
+      <div id="createMessage" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Bestehende Sessions</h2>
+      <div id="sessionsContainer"></div>
+    </div>
+  </main>
+
+  <script>
+    const createBtn = document.getElementById('createSessionBtn');
+    const sessionNameInput = document.getElementById('sessionName');
+    const createMessage = document.getElementById('createMessage');
+    const sessionsContainer = document.getElementById('sessionsContainer');
+
+    function getBaseUrl() {
+      return window.location.origin;
+    }
+
+    async function loadSessions() {
+      sessionsContainer.innerHTML = 'Lade Sessions...';
+
+      try {
+        const res = await fetch('/api/sessions');
+        const sessions = await res.json();
+
+        if (!Array.isArray(sessions) || sessions.length === 0) {
+          sessionsContainer.innerHTML = '<p>Noch keine Sessions angelegt.</p>';
+          return;
+        }
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Erstellt</th>
+            <th>Links</th>
+          </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        const base = getBaseUrl();
+
+        for (const s of sessions) {
+          const tr = document.createElement('tr');
+
+          const tdName = document.createElement('td');
+          tdName.textContent = s.name;
+          tr.appendChild(tdName);
+
+          const tdCode = document.createElement('td');
+          tdCode.innerHTML = `<span class="badge active">${s.id}</span>`;
+          tr.appendChild(tdCode);
+
+          const tdCreated = document.createElement('td');
+          tdCreated.className = 'nowrap';
+          if (s.createdAt) {
+            const d = new Date(s.createdAt);
+            tdCreated.textContent = d.toLocaleString();
+          } else {
+            tdCreated.textContent = '-';
+          }
+          tr.appendChild(tdCreated);
+
+          const tdLinks = document.createElement('td');
+
+          const guestUrl = `${base}/guest.html?session=${encodeURIComponent(s.id)}`;
+          const adminUrl = `${base}/admin.html?session=${encodeURIComponent(s.id)}`;
+
+          const guestBtn = document.createElement('button');
+          guestBtn.textContent = 'Gast-Link öffnen';
+          guestBtn.className = 'small link-btn';
+          guestBtn.addEventListener('click', () => {
+            window.open(guestUrl, '_blank');
+          });
+
+          const adminBtn = document.createElement('button');
+          adminBtn.textContent = 'DJ-Ansicht öffnen';
+          adminBtn.className = 'small link-btn';
+          adminBtn.addEventListener('click', () => {
+            window.open(adminUrl, '_blank');
+          });
+
+          const guestP = document.createElement('p');
+          guestP.className = 'url';
+          guestP.textContent = `Gast: ${guestUrl}`;
+
+          const adminP = document.createElement('p');
+          adminP.className = 'url';
+          adminP.textContent = `DJ: ${adminUrl}`;
+
+          tdLinks.appendChild(guestBtn);
+          tdLinks.appendChild(adminBtn);
+          tdLinks.appendChild(guestP);
+          tdLinks.appendChild(adminP);
+
+          tr.appendChild(tdLinks);
+
+          tbody.appendChild(tr);
+        }
+
+        table.appendChild(tbody);
+        sessionsContainer.innerHTML = '';
+        sessionsContainer.appendChild(table);
+
+      } catch (err) {
+        console.error(err);
+        sessionsContainer.innerHTML = '<p class="message error">Fehler beim Laden der Sessions.</p>';
+      }
+    }
+
+    createBtn.addEventListener('click', async () => {
+      createMessage.textContent = '';
+      createMessage.className = 'message';
+
+      const name = sessionNameInput.value.trim();
+      if (!name) {
+        createMessage.textContent = 'Bitte einen Session-Namen eingeben.';
+        createMessage.classList.add('error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+          createMessage.textContent = result.message || 'Fehler beim Erstellen.';
+          createMessage.classList.add('error');
+          return;
+        }
+
+        createMessage.textContent = 'Session erstellt ✅';
+        createMessage.classList.add('success');
+        sessionNameInput.value = '';
+        loadSessions();
+
+      } catch (err) {
+        console.error(err);
+        createMessage.textContent = 'Netzwerkfehler beim Erstellen.';
+        createMessage.classList.add('error');
+      }
+    });
+
+    // Beim Laden direkt die Sessions holen
+    loadSessions();
+  </script>
+</body>
+</html>
