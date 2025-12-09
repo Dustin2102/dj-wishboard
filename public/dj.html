@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>DJ Wishboard – DJ-Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --accent: #22c55e;
+      --accent-danger: #ef4444;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+      --border-strong: #374151;
+      --radius-lg: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 12px 32px;
+    }
+
+    .header {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 14px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 45%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .headline {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .subline {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .main-card {
+      margin-top: 14px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.95);
+      padding: 10px 12px 16px;
+    }
+
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .main-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .main-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: #020617;
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #22c55e, #16a34a);
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .helper-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #111827;
+      padding: 7px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      font-size: 12px;
+    }
+
+    tr:nth-child(even) td,
+    tr:nth-child(odd) td {
+      background: #020617;
+    }
+
+    .nowrap { white-space: nowrap; }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+    }
+
+    .status-open {
+      background: #113322;
+      color: #a8ffce;
+    }
+
+    .status-done {
+      background: #113355;
+      color: #c0daff;
+    }
+
+    .status-rejected {
+      background: #551111;
+      color: #ffc0c0;
+    }
+
+    tr.open td { opacity: 1; }
+    tr.done td { opacity: 0.5; }
+    tr.rejected td {
+      opacity: 0.6;
+      color: #ffb8b8;
+    }
+
+    .btn-sm {
+      border-radius: 999px;
+      border: none;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn-status-done {
+      background: #18643a;
+      color: #e0ffe8;
+    }
+
+    .btn-status-done:hover { background: #1f7f4a; }
+
+    .btn-status-reject {
+      background: #7a1f1f;
+      color: #ffe0e0;
+    }
+
+    .btn-status-reject:hover { background: #a42828; }
+
+    .comment-btn {
+      background: #333366;
+      color: #e0e0ff;
+    }
+
+    .comment-btn:hover { background: #444488; }
+
+    #errorBox {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #7f1d1d;
+      background: #450a0a;
+      color: #fecaca;
+      font-size: 12px;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      th:nth-child(5), td:nth-child(5) { display: none; } /* Kommentar */
+      th:nth-child(6), td:nth-child(6) { display: none; } /* Zeit */
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="header">
+    <div class="title-row">
+      <div class="title-left">
+        <div class="headline">
+          DJ Wishboard – DJ-Panel
+        </div>
+        <div class="subline" id="sessionSubtitle">
+          Session wird geladen...
+        </div>
+      </div>
+      <div>
+        <span class="pill">
+          <span class="pill-dot"></span>
+          Live auf <span id="envHost">–</span>
+        </span>
+      </div>
+    </div>
+    <div class="helper-text">
+      Dieses Panel ist nur für eine Session gedacht. Du siehst und steuerst ausschließlich die Wünsche dieser Session.
+    </div>
+  </header>
+
+  <section class="main-card">
+    <div class="main-header">
+      <div>
+        <div class="main-title" id="mainTitle">Wünsche</div>
+        <div class="main-subtitle" id="mainSubtitle">
+          Lade Wunschliste...
+        </div>
+      </div>
+      <div>
+        <button class="btn" id="btnRefresh">Neu laden</button>
+        <button class="btn btn-primary" id="btnToggleAuto">Auto-Refresh: an</button>
+      </div>
+    </div>
+
+    <div class="helper-text">
+      Tipp: Auto-Refresh hält die Liste aktuell, ohne dass du ständig F5 drücken musst.
+    </div>
+
+    <div id="errorBox"></div>
+
+    <div style="max-height: 65vh; overflow: auto; border-radius: 10px; border:1px solid var(--border-subtle); margin-top:8px;">
+      <table>
+        <thead>
+        <tr>
+          <th>Gast</th>
+          <th>Song</th>
+          <th>Interpret</th>
+          <th>Status</th>
+          <th>Kommentar</th>
+          <th>Zeit</th>
+          <th>Aktionen</th>
+        </tr>
+        </thead>
+        <tbody id="wishesBody">
+        <!-- wird per JS gefüllt -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+  document.getElementById('envHost').textContent = window.location.host;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session');
+  const djKey = urlParams.get('key');
+
+  const sessionSubtitle = document.getElementById('sessionSubtitle');
+  const mainTitle = document.getElementById('mainTitle');
+  const mainSubtitle = document.getElementById('mainSubtitle');
+  const wishesBody = document.getElementById('wishesBody');
+  const errorBox = document.getElementById('errorBox');
+  const btnRefresh = document.getElementById('btnRefresh');
+  const btnToggleAuto = document.getElementById('btnToggleAuto');
+
+  let autoRefresh = true;
+  let wishesInterval = null;
+
+  function showError(msg) {
+    errorBox.style.display = 'block';
+    errorBox.textContent = msg;
+  }
+
+  function clearError() {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
+
+  if (!sessionId || !djKey) {
+    sessionSubtitle.textContent = 'Fehler: Session oder DJ-Key fehlen in der URL.';
+    mainSubtitle.textContent = 'Dieses Panel benötigt die Parameter ?session=...&key=...';
+    showError('URL unvollständig. Bitte verwende den vollständigen DJ-Link aus dem Admin-Panel.');
+  } else {
+    init();
+  }
+
+  async function loadSessionInfo() {
+    try {
+      const url = `/api/dj/session?sessionId=${encodeURIComponent(sessionId)}&djKey=${encodeURIComponent(djKey)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Fehler beim Laden der Session.');
+      }
+
+      const s = data.session;
+      sessionSubtitle.textContent = `Session: ${s.name} (${s.id})`;
+      mainTitle.textContent = `Wünsche – ${s.name}`;
+      mainSubtitle.textContent = s.active
+        ? 'Session ist aktiv. Neue Wünsche können eingehen.'
+        : 'Session ist beendet. Es können keine neuen Wünsche mehr eingehen.';
+
+    } catch (err) {
+      console.error(err);
+      sessionSubtitle.textContent = 'Fehler beim Laden der Session.';
+      showError(err.message || 'Fehler beim Laden der Session.');
+    }
+  }
+
+  async function loadWishes() {
+    if (!sessionId || !djKey) return;
+
+    try {
+      clearError();
+      const url = `/api/dj/wishes?sessionId=${encodeURIComponent(sessionId)}&djKey=${encodeURIComponent(djKey)}`;
+      const res = await fetch(url);
+
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}));
+        showError(data.message || 'Kein Zugriff auf diese Session (DJ-Key ungültig).');
+        wishesBody.innerHTML = '';
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        wishesBody.innerHTML = '';
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.textContent = 'Keine Daten.';
+        td.style.textAlign = 'center';
+        td.style.padding = '16px';
+        tr.appendChild(td);
+        wishesBody.appendChild(tr);
+        return;
+      }
+
+      wishesBody.innerHTML = '';
+
+      if (data.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.textContent = 'Noch keine Wünsche für diese Session.';
+        td.style.textAlign = 'center';
+        td.style.padding = '16px';
+        tr.appendChild(td);
+        wishesBody.appendChild(tr);
+        mainSubtitle.textContent = 'Noch keine Wünsche eingegangen.';
+        return;
+      }
+
+      const sorted = [...data].sort((a, b) => {
+        const order = { open: 0, done: 1, rejected: 2 };
+        if (order[a.status] !== order[b.status]) {
+          return order[a.status] - order[b.status];
+        }
+        return b.id - a.id;
+      });
+
+      for (const wish of sorted) {
+        const tr = document.createElement('tr');
+        tr.className = wish.status;
+
+        const tdName = document.createElement('td');
+        tdName.textContent = wish.name || 'Gast';
+        tr.appendChild(tdName);
+
+        const tdTitle = document.createElement('td');
+        tdTitle.textContent = wish.title;
+        tr.appendChild(tdTitle);
+
+        const tdArtist = document.createElement('td');
+        tdArtist.textContent = wish.artist;
+        tr.appendChild(tdArtist);
+
+        const tdStatus = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.classList.add('badge-status');
+        if (wish.status === 'open') {
+          badge.classList.add('status-open');
+          badge.textContent = 'Offen';
+        } else if (wish.status === 'done') {
+          badge.classList.add('status-done');
+          badge.textContent = 'Erledigt';
+        } else if (wish.status === 'rejected') {
+          badge.classList.add('status-rejected');
+          badge.textContent = 'Abgelehnt';
+        }
+        tdStatus.appendChild(badge);
+        tr.appendChild(tdStatus);
+
+        const tdComment = document.createElement('td');
+        if (wish.comment) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Anzeigen';
+          btn.className = 'btn-sm comment-btn';
+          btn.addEventListener('click', () => {
+            alert('Kommentar von ' + (wish.name || 'Gast') + ':\n\n' + wish.comment);
+          });
+          tdComment.appendChild(btn);
+        } else {
+          tdComment.textContent = '-';
+        }
+        tr.appendChild(tdComment);
+
+        const tdTime = document.createElement('td');
+        tdTime.className = 'nowrap';
+        if (wish.createdAt) {
+          const d = new Date(wish.createdAt);
+          tdTime.textContent = d.toLocaleString();
+        } else {
+          tdTime.textContent = '-';
+        }
+        tr.appendChild(tdTime);
+
+        const tdActions = document.createElement('td');
+        if (wish.status !== 'done') {
+          const doneBtn = document.createElement('button');
+          doneBtn.textContent = 'Erledigt';
+          doneBtn.className = 'btn-sm btn-status-done';
+          doneBtn.addEventListener('click', () => updateStatus(wish.id, 'done'));
+          tdActions.appendChild(doneBtn);
+        }
+
+        if (wish.status !== 'rejected') {
+          const rejectBtn = document.createElement('button');
+          rejectBtn.textContent = 'Ablehnen';
+          rejectBtn.className = 'btn-sm btn-status-reject';
+          rejectBtn.style.marginLeft = '4px';
+          rejectBtn.addEventListener('click', () => updateStatus(wish.id, 'rejected'));
+          tdActions.appendChild(rejectBtn);
+        }
+
+        tr.appendChild(tdActions);
+        wishesBody.appendChild(tr);
+      }
+
+      mainSubtitle.textContent = `Anzahl Wünsche: ${data.length}`;
+
+    } catch (err) {
+      console.error(err);
+      showError('Fehler beim Laden der Wünsche.');
+      wishesBody.innerHTML = '';
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 7;
+      td.textContent = 'Fehler beim Laden der Wünsche.';
+      td.style.textAlign = 'center';
+      td.style.padding = '16px';
+      tr.appendChild(td);
+      wishesBody.appendChild(tr);
+    }
+  }
+
+  async function updateStatus(id, status) {
+    try {
+      clearError();
+      await fetch(`/api/dj/wishes/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, sessionId, djKey })
+      });
+      loadWishes();
+    } catch (err) {
+      console.error(err);
+      showError('Fehler beim Aktualisieren des Status.');
+    }
+  }
+
+  function startAutoRefresh() {
+    if (wishesInterval) clearInterval(wishesInterval);
+    wishesInterval = setInterval(() => {
+      if (autoRefresh) {
+        loadWishes();
+      }
+    }, 5000);
+  }
+
+  btnRefresh.addEventListener('click', () => {
+    loadWishes();
+  });
+
+  btnToggleAuto.addEventListener('click', () => {
+    autoRefresh = !autoRefresh;
+    btnToggleAuto.textContent = 'Auto-Refresh: ' + (autoRefresh ? 'an' : 'aus');
+  });
+
+  function init() {
+    loadSessionInfo();
+    loadWishes();
+    startAutoRefresh();
+  }
+</script>
+</body>
+</html>

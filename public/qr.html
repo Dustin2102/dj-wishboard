@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>DJ Wishboard – QR Anzeige</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --accent: #22c55e;
+      --accent-soft: #bbf7d0;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wrapper {
+      max-width: 900px;
+      width: 100%;
+      padding: 24px 16px;
+    }
+
+    .card {
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.96);
+      padding: 18px 22px 20px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .left {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .right {
+      flex: 1 1 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      color: var(--accent-soft);
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .session-label {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    #qrContainer canvas,
+    #qrContainer img {
+      width: 320px;
+      height: 320px;
+    }
+
+    .link-box {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px dashed var(--border-subtle);
+      background: rgba(15, 23, 42, 0.9);
+      word-break: break-all;
+    }
+
+    .link-box a {
+      color: #bfdbfe;
+      text-decoration: none;
+    }
+
+    .link-box a:hover {
+      text-decoration: underline;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #020617;
+      color: var(--text);
+      padding: 7px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(120deg, #22c55e, #16a34a);
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 700px) {
+      .card {
+        padding: 14px 12px 16px;
+      }
+      #qrContainer canvas,
+      #qrContainer img {
+        width: 260px;
+        height: 260px;
+      }
+    }
+  </style>
+
+  <!-- QR-Code Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<div class="wrapper">
+  <div class="card">
+    <div class="left">
+      <div id="qrContainer"></div>
+    </div>
+    <div class="right">
+      <div class="title">
+        Musikwünsche
+        <span class="badge" id="modeBadge">Gast</span>
+      </div>
+      <div class="subtitle">
+        Bitte mit dem Smartphone den QR-Code scannen, um deine Musikwünsche abzugeben.
+      </div>
+      <div class="session-label" id="sessionLabel"></div>
+
+      <div class="link-box">
+        Falls der QR-Code nicht funktioniert, nutze diesen Link:<br/>
+        <a href="#" id="fallbackLink" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+
+      <div class="buttons">
+        <button class="btn btn-primary" id="btnOpenTab">Link im neuen Tab öffnen</button>
+        <button class="btn" id="btnDownloadPng">QR-Code als PNG speichern</button>
+      </div>
+
+      <div class="hint">
+        Tipp: Dieses Fenster kannst du auf einen externen Monitor schieben und im Vollbild anzeigen.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getQueryParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
+  const targetUrl = getQueryParam('target');
+  const label = getQueryParam('label') || '';
+  const mode = getQueryParam('mode') || 'guest';
+
+  const sessionLabelEl = document.getElementById('sessionLabel');
+  const fallbackLinkEl = document.getElementById('fallbackLink');
+  const modeBadgeEl = document.getElementById('modeBadge');
+  const qrContainer = document.getElementById('qrContainer');
+
+  if (mode === 'dj') {
+    modeBadgeEl.textContent = 'DJ';
+  } else {
+    modeBadgeEl.textContent = 'Gast';
+  }
+
+  sessionLabelEl.textContent = label ? `Session: ${label}` : '';
+
+  if (!targetUrl) {
+    qrContainer.textContent = 'Fehler: Kein Link übergeben.';
+  } else {
+    // QR-Code erzeugen
+    new QRCode(qrContainer, {
+      text: targetUrl,
+      width: 320,
+      height: 320,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Fallback-Link setzen
+    fallbackLinkEl.textContent = targetUrl;
+    fallbackLinkEl.href = targetUrl;
+  }
+
+  document.getElementById('btnOpenTab').addEventListener('click', () => {
+    if (!targetUrl) return;
+    window.open(targetUrl, '_blank', 'noopener');
+  });
+
+  document.getElementById('btnDownloadPng').addEventListener('click', () => {
+    const canvas = qrContainer.querySelector('canvas');
+    let dataUrl;
+
+    if (canvas) {
+      dataUrl = canvas.toDataURL('image/png');
+    } else {
+      const img = qrContainer.querySelector('img');
+      if (!img) {
+        alert('Kein QR-Bild gefunden.');
+        return;
+      }
+      dataUrl = img.src;
+    }
+
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `qr_${(label || mode).replace(/\s+/g, '_')}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+</script>
+</body>
+</html>

@@ -17,6 +17,25 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 let sessions = [];
 let wishes = [];
 
+function generateSessionId(length = 6) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < length; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+// DJ-Key für Einladungslinks
+function generateDjKey(length = 32) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let key = '';
+  for (let i = 0; i < length; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return key;
+}
+
 function loadData() {
   try {
     if (fs.existsSync(DATA_FILE)) {
@@ -26,11 +45,20 @@ function loadData() {
         sessions = Array.isArray(parsed.sessions) ? parsed.sessions : [];
         wishes = Array.isArray(parsed.wishes) ? parsed.wishes : [];
 
-        // Falls alte Einträge kein "active" haben: standardmäßig aktiv
+        // Falls alte Einträge kein "active" oder keinen djKey haben:
+        let changed = false;
         for (const s of sessions) {
           if (typeof s.active === 'undefined') {
             s.active = true;
+            changed = true;
           }
+          if (!s.djKey) {
+            s.djKey = generateDjKey();
+            changed = true;
+          }
+        }
+        if (changed) {
+          saveData();
         }
 
         console.log(`Daten geladen: ${sessions.length} Sessions, ${wishes.length} Wünsche`);
@@ -59,16 +87,6 @@ function saveData() {
 // Beim Start einmal laden
 loadData();
 
-// Hilfsfunktion: kurze Session-IDs
-function generateSessionId(length = 6) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let id = '';
-  for (let i = 0; i < length; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
-}
-
 // ================== TEST ==================
 app.get('/api/test', (req, res) => {
   res.json({
@@ -80,7 +98,7 @@ app.get('/api/test', (req, res) => {
 
 // ================== SESSIONS ==================
 
-// Neue Session anlegen (mit Einstellungen)
+// Neue Session anlegen (mit Einstellungen + djKey)
 app.post('/api/sessions', (req, res) => {
   const { name, maxWishesPerGuest, requireName, allowComment } = req.body;
 
@@ -113,7 +131,8 @@ app.post('/api/sessions', (req, res) => {
     name: name.trim(),
     active: true,
     createdAt: new Date().toISOString(),
-    settings
+    settings,
+    djKey: generateDjKey() // Einladungs-Key für DJs
   };
 
   sessions.push(session);
@@ -341,7 +360,7 @@ app.get('/api/wishes', (req, res) => {
   res.json(wishes);
 });
 
-// Status ändern
+// Status ändern (klassisches Admin-Panel – ohne DJ-Key)
 app.post('/api/wishes/:id/status', (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body;
@@ -357,6 +376,111 @@ app.post('/api/wishes/:id/status', (req, res) => {
 
   const wish = wishes.find(w => w.id === id);
 
+  if (!wish) {
+    return res.status(404).json({
+      success: false,
+      message: 'Wunsch nicht gefunden.'
+    });
+  }
+
+  wish.status = status;
+  saveData();
+
+  return res.json({
+    success: true,
+    message: 'Status aktualisiert.',
+    wish
+  });
+});
+
+// ================== DJ-API (Session-spezifische Zugänge per djKey) ==================
+
+function getSessionByIdAndKey(sessionId, djKey) {
+  const session = sessions.find(s => s.id === sessionId);
+  if (!session) return { error: 'Session nicht gefunden.' };
+  if (!session.djKey || session.djKey !== djKey) {
+    return { error: 'Kein Zugriff auf diese Session (DJ-Key ungültig).' };
+  }
+  return { session };
+}
+
+// Session-Info nur mit djKey
+app.get('/api/dj/session', (req, res) => {
+  const { sessionId, djKey } = req.query;
+
+  if (!sessionId || !djKey) {
+    return res.status(400).json({
+      success: false,
+      message: 'SessionId und djKey sind erforderlich.'
+    });
+  }
+
+  const { session, error } = getSessionByIdAndKey(sessionId, djKey);
+  if (error) {
+    return res.status(403).json({
+      success: false,
+      message: error
+    });
+  }
+
+  return res.json({
+    success: true,
+    session
+  });
+});
+
+// Wünsche nur für diese Session + djKey
+app.get('/api/dj/wishes', (req, res) => {
+  const { sessionId, djKey } = req.query;
+
+  if (!sessionId || !djKey) {
+    return res.status(400).json({
+      success: false,
+      message: 'SessionId und djKey sind erforderlich.'
+    });
+  }
+
+  const { session, error } = getSessionByIdAndKey(sessionId, djKey);
+  if (error) {
+    return res.status(403).json({
+      success: false,
+      message: error
+    });
+  }
+
+  const filtered = wishes.filter(w => w.sessionId === session.id);
+  return res.json(filtered);
+});
+
+// Status ändern – aber nur mit gültigem djKey und passender Session
+app.post('/api/dj/wishes/:id/status', (req, res) => {
+  const id = Number(req.params.id);
+  const { status, sessionId, djKey } = req.body;
+
+  const allowedStatuses = ['open', 'done', 'rejected'];
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Ungültiger Status.'
+    });
+  }
+
+  if (!sessionId || !djKey) {
+    return res.status(400).json({
+      success: false,
+      message: 'SessionId und djKey sind erforderlich.'
+    });
+  }
+
+  const { session, error } = getSessionByIdAndKey(sessionId, djKey);
+  if (error) {
+    return res.status(403).json({
+      success: false,
+      message: error
+    });
+  }
+
+  const wish = wishes.find(w => w.id === id && w.sessionId === session.id);
   if (!wish) {
     return res.status(404).json({
       success: false,

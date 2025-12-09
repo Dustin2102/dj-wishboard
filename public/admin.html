@@ -889,6 +889,16 @@
   const qrCodeContainer = document.getElementById('qrCodeContainer');
   const qrDownloadBtn = document.getElementById('qrDownloadBtn');
 
+  function openQrWindow(targetUrl, sessionLabel, typeLabel) {
+    const mode = typeLabel === 'DJ' ? 'dj' : 'guest';
+    const url = `${baseUrl}/qr.html?` +
+      `mode=${encodeURIComponent(mode)}` +
+      `&label=${encodeURIComponent(sessionLabel || '')}` +
+      `&target=${encodeURIComponent(targetUrl)}`;
+
+    window.open(url, '_blank');
+  }
+
   function openQrModal(url, label) {
     qrModalTitleEl.textContent = 'QR-Code – ' + (label || 'Link');
     qrCodeContainer.innerHTML = '';
@@ -1045,7 +1055,7 @@
           const tdLinks = document.createElement('td');
 
           const guestUrl = `${baseUrl}/guest.html?session=${encodeURIComponent(s.id)}`;
-          const adminUrl = `${baseUrl}/admin.html?session=${encodeURIComponent(s.id)}`;
+          const adminUrl = `${baseUrl}/dj.html?session=${encodeURIComponent(s.id)}&key=${encodeURIComponent(s.djKey)}`;
 
           const setActiveBtn = document.createElement('button');
           setActiveBtn.textContent = 'Als aktive Session';
@@ -1072,7 +1082,7 @@
           guestQrBtn.className = 'btn-sm btn-link';
           guestQrBtn.style.marginLeft = '4px';
           guestQrBtn.addEventListener('click', () =>
-            openQrModal(guestUrl, `Gastlink ${s.name || s.id}`)
+            openQrWindow(guestUrl, s.name || s.id, 'Gast')
           );
 
           const copyAdminBtn = document.createElement('button');
@@ -1086,7 +1096,7 @@
           adminQrBtn.className = 'btn-sm btn-link';
           adminQrBtn.style.marginLeft = '4px';
           adminQrBtn.addEventListener('click', () =>
-            openQrModal(adminUrl, `DJ-Link ${s.name || s.id}`)
+            openQrWindow(adminUrl, s.name || s.id, 'DJ')
           );
 
           const guestP = document.createElement('p');
@@ -1185,7 +1195,7 @@
           const tdLinks = document.createElement('td');
 
           const guestUrl = `${baseUrl}/guest.html?session=${encodeURIComponent(s.id)}`;
-          const adminUrl = `${baseUrl}/admin.html?session=${encodeURIComponent(s.id)}`;
+          const adminUrl = `${baseUrl}/dj.html?session=${encodeURIComponent(s.id)}&key=${encodeURIComponent(s.djKey)}`;
 
           const reactivateBtn = document.createElement('button');
           reactivateBtn.textContent = 'Reaktivieren';
@@ -1203,7 +1213,7 @@
           guestQrBtn.className = 'btn-sm btn-link';
           guestQrBtn.style.marginLeft = '4px';
           guestQrBtn.addEventListener('click', () =>
-            openQrModal(guestUrl, `Gastlink ${s.name || s.id}`)
+            openQrWindow(guestUrl, s.name || s.id, 'Gast')
           );
 
           const adminQrBtn = document.createElement('button');
@@ -1211,7 +1221,7 @@
           adminQrBtn.className = 'btn-sm btn-link';
           adminQrBtn.style.marginLeft = '4px';
           adminQrBtn.addEventListener('click', () =>
-            openQrModal(adminUrl, `DJ-Link ${s.name || s.id}`)
+            openQrWindow(adminUrl, s.name || s.id, 'DJ')
           );
 
           const guestP = document.createElement('p');
