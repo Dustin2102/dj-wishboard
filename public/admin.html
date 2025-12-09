@@ -532,6 +532,95 @@
       margin-top: 4px;
     }
 
+    /* QR MODAL */
+    .qr-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .qr-modal {
+      background: #020617;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      padding: 14px 16px 16px;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .qr-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .qr-modal-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .qr-modal-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    #qrCodeContainer canvas,
+    #qrCodeContainer img {
+      width: 256px;
+      height: 256px;
+    }
+
+    .qr-modal-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-ghost-sm {
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: #020617;
+      color: var(--text-muted);
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-ghost-sm:hover {
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+
+    .btn-primary-sm-full {
+      background: #22c55e;
+      color: #022c22;
+      font-weight: 600;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 11px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-primary-sm-full:hover {
+      filter: brightness(1.05);
+    }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
       .layout { flex-direction: column; }
@@ -540,6 +629,9 @@
       th:nth-child(6), td:nth-child(6) { display: none; } /* Zeit */
     }
   </style>
+
+  <!-- QR-Code Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="layout">
@@ -732,6 +824,26 @@
   </main>
 </div>
 
+<!-- QR MODAL -->
+<div id="qrModalBackdrop" class="qr-modal-backdrop">
+  <div class="qr-modal">
+    <div class="qr-modal-header">
+      <div class="qr-modal-title" id="qrModalTitle">QR-Code</div>
+      <button type="button" class="btn-ghost-sm" onclick="closeQrModal()">Schließen</button>
+    </div>
+    <div class="qr-modal-body">
+      <div id="qrCodeContainer"></div>
+      <div class="helper-text" id="qrModalInfo">
+        Scanne den Code mit dem Handy oder lade ihn als Bild herunter.
+      </div>
+    </div>
+    <div class="qr-modal-footer">
+      <button type="button" class="btn-ghost-sm" onclick="closeQrModal()">Abbrechen</button>
+      <button type="button" id="qrDownloadBtn" class="btn-primary-sm-full">QR-Code herunterladen</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const baseUrl = window.location.origin;
   document.getElementById('baseUrlText').textContent = baseUrl;
@@ -770,6 +882,57 @@
 
   const navButtons = document.querySelectorAll('.nav-btn');
   const views = document.querySelectorAll('.view');
+
+  // QR MODAL ELEMENTE
+  const qrModalBackdrop = document.getElementById('qrModalBackdrop');
+  const qrModalTitleEl = document.getElementById('qrModalTitle');
+  const qrCodeContainer = document.getElementById('qrCodeContainer');
+  const qrDownloadBtn = document.getElementById('qrDownloadBtn');
+
+  function openQrModal(url, label) {
+    qrModalTitleEl.textContent = 'QR-Code – ' + (label || 'Link');
+    qrCodeContainer.innerHTML = '';
+
+    // QR-Code erzeugen
+    new QRCode(qrCodeContainer, {
+      text: url,
+      width: 256,
+      height: 256,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Download-Handler jedes Mal neu setzen,
+    // damit immer der aktuelle QR benutzt wird
+    qrDownloadBtn.onclick = function () {
+      const canvas = qrCodeContainer.querySelector('canvas');
+      let dataUrl;
+
+      if (canvas) {
+        dataUrl = canvas.toDataURL('image/png');
+      } else {
+        const img = qrCodeContainer.querySelector('img');
+        if (!img) {
+          alert('Kein QR-Bild gefunden.');
+          return;
+        }
+        dataUrl = img.src;
+      }
+
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'qr_' + (label || 'link').replace(/\s+/g, '_') + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+
+    qrModalBackdrop.style.display = 'flex';
+  }
+
+  function closeQrModal() {
+    qrModalBackdrop.style.display = 'none';
+    qrCodeContainer.innerHTML = '';
+  }
 
   function switchView(id) {
     views.forEach(v => v.classList.toggle('active', v.id === 'view-' + id));
@@ -904,11 +1067,27 @@
           copyGuestBtn.style.marginLeft = '4px';
           copyGuestBtn.addEventListener('click', () => copyToClipboard(guestUrl));
 
+          const guestQrBtn = document.createElement('button');
+          guestQrBtn.textContent = 'Gast-QR';
+          guestQrBtn.className = 'btn-sm btn-link';
+          guestQrBtn.style.marginLeft = '4px';
+          guestQrBtn.addEventListener('click', () =>
+            openQrModal(guestUrl, `Gastlink ${s.name || s.id}`)
+          );
+
           const copyAdminBtn = document.createElement('button');
           copyAdminBtn.textContent = 'DJ-Link kopieren';
           copyAdminBtn.className = 'btn-sm btn-link';
           copyAdminBtn.style.marginLeft = '4px';
           copyAdminBtn.addEventListener('click', () => copyToClipboard(adminUrl));
+
+          const adminQrBtn = document.createElement('button');
+          adminQrBtn.textContent = 'DJ-QR';
+          adminQrBtn.className = 'btn-sm btn-link';
+          adminQrBtn.style.marginLeft = '4px';
+          adminQrBtn.addEventListener('click', () =>
+            openQrModal(adminUrl, `DJ-Link ${s.name || s.id}`)
+          );
 
           const guestP = document.createElement('p');
           guestP.className = 'url';
@@ -936,7 +1115,9 @@
           tdLinks.appendChild(setActiveBtn);
           tdLinks.appendChild(archiveBtn);
           tdLinks.appendChild(copyGuestBtn);
+          tdLinks.appendChild(guestQrBtn);
           tdLinks.appendChild(copyAdminBtn);
+          tdLinks.appendChild(adminQrBtn);
           tdLinks.appendChild(guestP);
           tdLinks.appendChild(adminP);
           tdLinks.appendChild(settingsInfo);
@@ -1017,6 +1198,22 @@
           deleteBtn.style.marginLeft = '4px';
           deleteBtn.addEventListener('click', () => deleteSession(s));
 
+          const guestQrBtn = document.createElement('button');
+          guestQrBtn.textContent = 'Gast-QR';
+          guestQrBtn.className = 'btn-sm btn-link';
+          guestQrBtn.style.marginLeft = '4px';
+          guestQrBtn.addEventListener('click', () =>
+            openQrModal(guestUrl, `Gastlink ${s.name || s.id}`)
+          );
+
+          const adminQrBtn = document.createElement('button');
+          adminQrBtn.textContent = 'DJ-QR';
+          adminQrBtn.className = 'btn-sm btn-link';
+          adminQrBtn.style.marginLeft = '4px';
+          adminQrBtn.addEventListener('click', () =>
+            openQrModal(adminUrl, `DJ-Link ${s.name || s.id}`)
+          );
+
           const guestP = document.createElement('p');
           guestP.className = 'url';
           guestP.textContent = `Gast: ${guestUrl}`;
@@ -1036,6 +1233,8 @@
 
           tdLinks.appendChild(reactivateBtn);
           tdLinks.appendChild(deleteBtn);
+          tdLinks.appendChild(guestQrBtn);
+          tdLinks.appendChild(adminQrBtn);
           tdLinks.appendChild(guestP);
           tdLinks.appendChild(adminP);
           tdLinks.appendChild(settingsInfo);
